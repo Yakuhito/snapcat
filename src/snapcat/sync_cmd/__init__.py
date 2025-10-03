@@ -24,7 +24,7 @@ from snapcat.config import (
     target_height,
 )
 
-from snapcat.shared import Bytes32ParamType
+from snapcat.shared import Bytes32ParamType, HttpFullNodeRpcClient
 from snapcat.sync_cmd.sync import get_full_node_synced, process_block
 
 log = logging.getLogger("snapcat")
@@ -111,8 +111,15 @@ async def process_blocks(full_node_rpc, sync_progress, db, tail_hash: bytes32):
     help="The TAIL hash of CAT",
     type=Bytes32ParamType(),
 )
+@click.option(
+    "-c",
+    "--coinset-url",
+    required=False,
+    help="Coinset.org API URL (if provided, local full node will not be used)",
+    type=str,
+)
 @click.pass_context
-def sync(ctx, tail_hash: bytes32):
+def sync(ctx, tail_hash: bytes32, coinset_url: str = ""):
     async def _sync(tail_hash: bytes32) -> None:
         db_file_name = (
             ctx.obj["db_file_name"]
@@ -166,14 +173,19 @@ def sync(ctx, tail_hash: bytes32):
                 refresh_per_second=5,
             )
             with block_progress:
-                async with FullNodeRpcClient.create_as_context(
-                    self_hostname,
-                    full_node_rpc_port,
-                    chia_root,
-                    chia_config,
-                ) as full_node_rpc:
+                if coinset_url:
+                    full_node_rpc = HttpFullNodeRpcClient(coinset_url)
                     await syncing_full_node(full_node_rpc, block_progress)
                     await process_blocks(full_node_rpc, block_progress, db, tail_hash)
+                else:
+                    async with FullNodeRpcClient.create_as_context(
+                        self_hostname,
+                        full_node_rpc_port,
+                        chia_root,
+                        chia_config,
+                    ) as full_node_rpc:
+                        await syncing_full_node(full_node_rpc, block_progress)
+                        await process_blocks(full_node_rpc, block_progress, db, tail_hash)
 
     try:
         console.print("[bold red]press Ctrl+C to exit.")
