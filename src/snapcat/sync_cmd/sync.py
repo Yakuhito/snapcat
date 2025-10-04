@@ -48,10 +48,7 @@ async def process_coin_spends(
         if result is None:
             log.debug(f"{expected_tail_hash.hex()} CAT coin spend not found")
         else:
-            outer_puzzle = coin_spend.puzzle_reveal.to_program()
-            outer_solution = coin_spend.solution.to_program()
-            inner_solution = outer_solution.first()
-            (_, outer_puzzle, _, inner_puzzle, _) = result
+            (_, outer_puzzle, outer_solution, inner_puzzle, inner_solution) = result
 
             coin_spend_coin_name = coin_spend.coin.name().hex()
 
