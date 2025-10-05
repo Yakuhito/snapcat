@@ -1,8 +1,8 @@
-from pkg_resources import DistributionNotFound, get_distribution
+from importlib.metadata import PackageNotFoundError, version as importlib_version
 
 try:
-    __version__ = get_distribution("snapcat").version
-except DistributionNotFound:
+    __version__ = importlib_version("snapcat")
+except PackageNotFoundError:
     # package is not installed
     __version__ = "unknown"
 

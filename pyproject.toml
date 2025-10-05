@@ -8,7 +8,7 @@ packages = [{include = "snapcat", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-rich-click = "^1.8.0"
+rich-click = "^1.9.2"
 python-dotenv = "^1.0.1"
 asyncio = "^3.4.3"
 
