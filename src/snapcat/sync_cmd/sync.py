@@ -29,7 +29,7 @@ async def get_full_node_synced(
 async def process_coin_spends(
     db,
     expected_tail_hash: bytes32,
-    hidden_puzzle_hash: bytes32 | None = None,
+    hidden_puzzle_hash: bytes32 | None,
     height,
     header_hash: str,
     coin_spends: Optional[List[CoinSpend]],
@@ -109,7 +109,7 @@ async def process_block(
     full_node_rpc: FullNodeRpcClient,
     db,
     tail_hash: bytes32,
-    hidden_puzzle_hash: bytes32 | None = None,
+    hidden_puzzle_hash: bytes32 | None,
     height: int,
 ):
     block_record = await full_node_rpc.get_block_record_by_height(height)

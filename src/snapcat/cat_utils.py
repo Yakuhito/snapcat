@@ -36,8 +36,8 @@ def extract_cat(
     hidden_puzzle_hash: bytes32 | None,
     coin_spend: CoinSpend,
 ) -> Union[None, Tuple[Program, Program, Program, Program, Program]]:
-    outer_puzzle = coin_spend.puzzle_reveal.to_program()
-    outer_solution = coin_spend.solution.to_program()
+    outer_puzzle = coin_spend.puzzle_reveal
+    outer_solution = coin_spend.solution
     cat_curried_args = match_cat_puzzle(uncurry_puzzle(outer_puzzle))
     if cat_curried_args is None:
         return None

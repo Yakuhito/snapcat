@@ -61,7 +61,13 @@ async def syncing_full_node(full_node_rpc, sync_progress):
         await asyncio.sleep(5)
 
 
-async def process_blocks(full_node_rpc, sync_progress, db, tail_hash: bytes32):
+async def process_blocks(
+    full_node_rpc,
+    sync_progress,
+    db,
+    tail_hash: bytes32,
+    hidden_puzzle_hash: bytes32 | None,
+):
     global abort_height
     async with db.execute(
         "SELECT value FROM config WHERE key = 'last_block_height'"
@@ -92,7 +98,7 @@ async def process_blocks(full_node_rpc, sync_progress, db, tail_hash: bytes32):
             print(message)
             break
 
-        await process_block(full_node_rpc, db, tail_hash, height)
+        await process_block(full_node_rpc, db, tail_hash, hidden_puzzle_hash, height)
 
         sync_progress.update(
             process_blocks_task_id,
