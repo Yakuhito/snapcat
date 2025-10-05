@@ -6,7 +6,7 @@ import rich_click as click
 from rich.console import Console
 from typing import Optional
 
-from chia.types.blockchain_format.sized_bytes import bytes32
+from chia_rs.sized_bytes import bytes32
 
 from snapcat.shared import Bytes32ParamType
 

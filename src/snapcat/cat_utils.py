@@ -1,14 +1,12 @@
 from typing import Dict, List, Tuple, Union
 from chia.types.blockchain_format.coin import Coin
-from chia.types.blockchain_format.sized_bytes import bytes32
+from chia_rs.sized_bytes import bytes32
 from chia.types.blockchain_format.program import Program
 from chia.types.coin_spend import CoinSpend
 from chia.types.condition_opcodes import ConditionOpcode
 from chia.types.condition_with_args import ConditionWithArgs
-from chia.util.condition_tools import (
-    conditions_dict_for_solution,
-)
-from chia.util.ints import uint64
+from chia.consensus.condition_tools import conditions_dict_for_solution
+from chia_rs.sized_ints import uint64
 from clvm.casts import int_from_bytes
 
 from chia.wallet.cat_wallet.cat_utils import match_cat_puzzle
