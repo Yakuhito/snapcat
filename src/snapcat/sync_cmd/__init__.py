@@ -184,7 +184,7 @@ def sync(
                 """
                 INSERT OR IGNORE INTO config(key, value) VALUES('hidden_puzzle_hash', ?);
                 """,
-                [hidden_puzzle_hash.hex()],
+                [hidden_puzzle_hash.hex() if hidden_puzzle_hash is not None else ''],
             )
             await db.commit()
 
