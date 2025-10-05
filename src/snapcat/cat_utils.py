@@ -10,7 +10,10 @@ from chia_rs.sized_ints import uint64
 from clvm.casts import int_from_bytes
 
 from chia.wallet.cat_wallet.cat_utils import match_cat_puzzle
+from chia.wallet.vc_wallet.vc_drivers import match_revocation_layer
 from chia.wallet.uncurried_puzzle import uncurry_puzzle
+from chia.wallet.cat_wallet.cat_utils import CAT_MOD_HASH
+from chia.wallet.vc_wallet.vc_drivers import REVOCATION_LAYER_HASH
 
 
 def created_outputs_for_conditions_dict(
@@ -30,6 +33,7 @@ def created_outputs_for_conditions_dict(
 
 def extract_cat(
     expected_tail_hash: bytes32,
+    hidden_puzzle_hash: bytes32 | None,
     coin_spend: CoinSpend,
 ) -> Union[None, Tuple[Program, Program, Program, Program, Program]]:
     outer_puzzle = coin_spend.puzzle_reveal.to_program()
@@ -43,12 +47,40 @@ def extract_cat(
         return None
 
     # CAT2
-    _, tail_program_hash, inner_puzzle = cat_curried_args
+    cat_mod_hash, tail_program_hash, inner_puzzle = cat_curried_args
     tail_hash = bytes32(tail_program_hash.as_atom())
-    if tail_hash != expected_tail_hash:
+    cat_mod_hash = bytes32(cat_mod_hash.as_atom())
+    if tail_hash != expected_tail_hash or cat_mod_hash != CAT_MOD_HASH:
         return None
 
-    inner_solution = outer_solution.first()
+    inner_solution = None
+    if hidden_puzzle_hash is None:
+        inner_solution = outer_solution.first()
+    else:
+        revocation_layer_curried_args = match_revocation_layer(uncurry_puzzle(inner_puzzle))
+        if revocation_layer_curried_args is None:
+            return None
+
+        revocation_layer_curried_args = list(revocation_layer_curried_args)
+        if len(revocation_layer_curried_args) != 3:
+            return None
+        
+        revocation_layer_hash, hidden_puzzle_hash_arg, inner_puzzle_hash = revocation_layer_curried_args
+        revocation_layer_hash = bytes32(revocation_layer_hash.as_atom())
+        hidden_puzzle_hash_arg = bytes32(hidden_puzzle_hash_arg.as_atom())
+        inner_puzzle_hash = bytes32(inner_puzzle_hash.as_atom())
+
+        if revocation_layer_hash != REVOCATION_LAYER_HASH or hidden_puzzle_hash_arg != hidden_puzzle_hash:
+            return None
+        
+        interim_solution = outer_solution.first()
+        hidden = bool(interim_solution.first().as_atom())
+        inner_puzzle = interim_solution.rest().first()
+        actual_inner_puzzle_hash = inner_puzzle.get_tree_hash()
+        inner_solution = interim_solution.rest().rest().first()
+
+        if (hidden and actual_inner_puzzle_hash != hidden_puzzle_hash) or (not hidden and actual_inner_puzzle_hash != inner_puzzle_hash):
+            return None
 
     return tail_hash, outer_puzzle, outer_solution, inner_puzzle, inner_solution
 
