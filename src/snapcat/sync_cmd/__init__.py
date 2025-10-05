@@ -118,8 +118,20 @@ async def process_blocks(full_node_rpc, sync_progress, db, tail_hash: bytes32):
     help="Coinset.org API URL (if provided, local full node will not be used)",
     type=str,
 )
+@click.option(
+    "--hidden-puzzle-hash",
+    required=False,
+    help="Optional hidden puzzle hash (Bytes32)",
+    type=Bytes32ParamType(),
+    default=None,
+)
 @click.pass_context
-def sync(ctx, tail_hash: bytes32, coinset_url: str = ""):
+def sync(
+    ctx,
+    tail_hash: bytes32,
+    coinset_url: str = "",
+    hidden_puzzle_hash: bytes32 | None = None,
+):
     async def _sync(tail_hash: bytes32) -> None:
         db_file_name = (
             ctx.obj["db_file_name"]
@@ -162,6 +174,12 @@ def sync(ctx, tail_hash: bytes32, coinset_url: str = ""):
                 """,
                 [tail_hash.hex()],
             )
+            await db.execute(
+                """
+                INSERT OR IGNORE INTO config(key, value) VALUES('hidden_puzzle_hash', ?);
+                """,
+                [hidden_puzzle_hash.hex()],
+            )
             await db.commit()
 
             block_progress = Progress(
@@ -176,7 +194,13 @@ def sync(ctx, tail_hash: bytes32, coinset_url: str = ""):
                 if coinset_url:
                     full_node_rpc = HttpFullNodeRpcClient(coinset_url)
                     await syncing_full_node(full_node_rpc, block_progress)
-                    await process_blocks(full_node_rpc, block_progress, db, tail_hash)
+                    await process_blocks(
+                        full_node_rpc,
+                        block_progress,
+                        db,
+                        tail_hash,
+                        hidden_puzzle_hash,
+                    )
                 else:
                     async with FullNodeRpcClient.create_as_context(
                         self_hostname,
@@ -185,7 +209,13 @@ def sync(ctx, tail_hash: bytes32, coinset_url: str = ""):
                         chia_config,
                     ) as full_node_rpc:
                         await syncing_full_node(full_node_rpc, block_progress)
-                        await process_blocks(full_node_rpc, block_progress, db, tail_hash)
+                        await process_blocks(
+                            full_node_rpc,
+                            block_progress,
+                            db,
+                            tail_hash,
+                            hidden_puzzle_hash,
+                        )
 
     try:
         console.print("[bold red]press Ctrl+C to exit.")
