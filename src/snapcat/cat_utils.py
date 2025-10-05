@@ -13,7 +13,6 @@ from chia.wallet.cat_wallet.cat_utils import match_cat_puzzle
 from chia.wallet.vc_wallet.vc_drivers import match_revocation_layer
 from chia.wallet.uncurried_puzzle import uncurry_puzzle
 from chia.wallet.cat_wallet.cat_utils import CAT_MOD_HASH
-from chia.wallet.vc_wallet.vc_drivers import REVOCATION_LAYER_HASH
 
 
 def created_outputs_for_conditions_dict(
@@ -62,15 +61,11 @@ def extract_cat(
             return None
 
         revocation_layer_curried_args = list(revocation_layer_curried_args)
-        if len(revocation_layer_curried_args) != 3:
+        if len(revocation_layer_curried_args) != 2:
             return None
         
-        revocation_layer_hash, hidden_puzzle_hash_arg, inner_puzzle_hash = revocation_layer_curried_args
-        revocation_layer_hash = bytes32(revocation_layer_hash.as_atom())
-        hidden_puzzle_hash_arg = bytes32(hidden_puzzle_hash_arg.as_atom())
-        inner_puzzle_hash = bytes32(inner_puzzle_hash.as_atom())
-
-        if revocation_layer_hash != REVOCATION_LAYER_HASH or hidden_puzzle_hash_arg != hidden_puzzle_hash:
+        hidden_puzzle_hash_arg, inner_puzzle_hash = revocation_layer_curried_args
+        if hidden_puzzle_hash_arg != hidden_puzzle_hash:
             return None
         
         interim_solution = outer_solution.first()
